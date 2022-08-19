@@ -36,7 +36,8 @@ pub fn producer_loop(
         let result: Result<(), _> = redis::cmd("XADD")
             .arg(stream)
             .arg("*")
-            .arg(&[(key, json!(event).to_string())])
+            .arg(&[("key", key)])
+            .arg(&[("json", json!(event).to_string())])
             .query(conn);
 
         match result {
