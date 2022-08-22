@@ -50,7 +50,7 @@ pub fn producer_loop(
             .query(conn);
 */
 
-        let parsedCip25: Value = serde_json::from_str(json!(event))?;
+        let parsedCip25: Value = serde_json::from_str(&json!(event).to_string()).unwrap();
         let asset = parsedCip25["asset"].to_string();
         let description = parsedCip25["description"].to_string();
         let image = parsedCip25["image"].to_string();
