@@ -1,6 +1,7 @@
 use super::StreamStrategy;
 use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
 use serde_json::json;
+use serde_json::{Result, Value};
 use std::sync::Arc;
 
 fn key(event: &Event) -> String {
@@ -49,7 +50,7 @@ pub fn producer_loop(
             .query(conn);
 */
 
-        let parsedCip25 = serde_json::from_str(&json!(event).to_string()).unwrap();
+        let parsedCip25: Value = serde_json::from_str(&json!(event).to_string()).unwrap();
         let asset = parsedCip25["asset"];
         let description = parsedCip25["description"];
         let image = parsedCip25["image"];
