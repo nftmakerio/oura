@@ -3,6 +3,7 @@ use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
 use serde_json::Value;
 use serde_json::json;
 use std::sync::Arc;
+use hex;
 
 fn key(event: &Event) -> String {
     if let Some(fingerprint) = &event.fingerprint {
@@ -40,6 +41,7 @@ pub fn producer_loop(
         if stream.eq("cip25asset") {
             let parsed_cip25 = &parsed_json["cip25_asset"];
             let asset = parsed_cip25["asset"].to_string();
+            let asset_hex = parsed_cip25["asset"].to_string();
             let name = parsed_cip25["name"].to_string();
             let description = parsed_cip25["description"].to_string();
             let asset_lc = parsed_cip25["asset"].to_string().to_lowercase();
@@ -50,8 +52,15 @@ pub fn producer_loop(
             let policy = parsed_cip25["policy"].to_string();
             let raw_json = json!(parsed_cip25["raw_json"]).to_string().to_lowercase();
 
+            let context = &parsed_json["context"];
+            let timestamp = context["timestamp"].to_string().replace("\"","");
+
+
+            let mut keyName = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
+            keyName = keyName.replace("\"","");
+
             let result: Result<(), _> = redis::cmd("HSET")
-            .arg(format!("{}:{}:{}", stream, policy, asset_lc))
+            .arg(keyName)
             .arg("policy").arg(policy)
             .arg("asset").arg(asset)
             .arg("name").arg(name)
@@ -62,6 +71,7 @@ pub fn producer_loop(
             .arg("image").arg(image)
             .arg("media_type").arg(media_type)
             .arg("raw_json").arg(raw_json)
+            .arg("timestamp").arg(timestamp)
             .query(conn);
 
             match result {
