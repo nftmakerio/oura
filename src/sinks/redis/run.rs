@@ -50,7 +50,8 @@ pub fn producer_loop(
 */
 
         let result: Result<(), _> = redis::cmd("SET")
-        .arg(key)
+        .arg("cip25_asset:" + key)
+        .arg("json_text")
         .arg(json!(event).to_string())
         .query(conn);
 
