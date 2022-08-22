@@ -49,8 +49,8 @@ pub fn producer_loop(
             .query(conn);
 */
 
-        let result: Result<(), _> = redis::cmd("SET")
-        .arg("cip25_asset:" + key)
+        let result: Result<(), _> = redis::cmd("HSET")
+        .arg("cip25_asset:" + &key)
         .arg("json_text")
         .arg(json!(event).to_string())
         .query(conn);
