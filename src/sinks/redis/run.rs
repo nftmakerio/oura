@@ -35,26 +35,36 @@ pub fn producer_loop(
         );
 
         let parsed_json: Value = serde_json::from_str(&json!(event).to_string()).unwrap();
-        let parsed_cip25 = &parsed_json["cip25_asset"];
-        let asset = parsed_cip25["asset"].to_string();
-        let description = parsed_cip25["description"].to_string();
-        let image = parsed_cip25["image"].to_string();
-        let media_type = parsed_cip25["media_type"].to_string();
-        let policy = parsed_cip25["policy"].to_string();
-        let name = parsed_cip25["name"].to_string();
-        let raw_json = json!(parsed_cip25["raw_json"]).to_string();
+        let result: Result<(), _>;
 
+        if (stream == "cip25asset") {
+            let parsed_cip25 = &parsed_json["cip25_asset"];
+            let asset = parsed_cip25["asset"].to_string();
+            let description = parsed_cip25["description"].to_string();
+            let image = parsed_cip25["image"].to_string();
+            let media_type = parsed_cip25["media_type"].to_string();
+            let policy = parsed_cip25["policy"].to_string();
+            let name = parsed_cip25["name"].to_string();
+            let raw_json = json!(parsed_cip25["raw_json"]).to_string();
 
-        let result: Result<(), _> = redis::cmd("HSET")
-        .arg(format!("{}:cip25_asset:{}.{}", stream, policy, asset))
-        .arg("policy").arg(policy)
-        .arg("asset").arg(asset)
-        .arg("name").arg(name)
-        .arg("image").arg(image)
-        .arg("media_type").arg(media_type)
-        .arg("description").arg(description)
-        .arg("raw_json").arg(raw_json)
-        .query(conn);
+             result = redis::cmd("HSET")
+            .arg(format!("{}:{}:{}", stream, policy, asset))
+            .arg("policy").arg(policy)
+            .arg("asset").arg(asset)
+            .arg("name").arg(name)
+            .arg("image").arg(image)
+            .arg("media_type").arg(media_type)
+            .arg("description").arg(description)
+            .arg("raw_json").arg(raw_json)
+            .query(conn);
+        } 
+        else 
+        {
+            let result = redis::cmd("HSET")
+            .arg(format!("{}:{}", stream, key))
+            .arg("json_text").arg(json!(event).to_string())
+            .query(conn);
+        }
 
 
         match result {
