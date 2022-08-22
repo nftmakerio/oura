@@ -49,11 +49,26 @@ pub fn producer_loop(
             .query(conn);
 */
 
+        let parsedCip25 = json::parse(json!(event).to_string()).unwrap();
+        let asset = parsedCip25["asset"];
+        let description = parsedCip25["description"];
+        let image = parsedCip25["image"];
+        let media_type = parsedCip25["media_type"];
+        let policy = parsedCip25["policy"];
+        let name = parsedCip25["name"];
+        let raw_json = json!(parsedCip25["raw_json"]).to_string();
+
         let result: Result<(), _> = redis::cmd("HSET")
-        .arg(format!("cip25_asset:{}", key))
-        .arg("json_text")
-        .arg(json!(event).to_string())
+        .arg(format!("cip25_asset:{}.{}", policy, asset))
+        .arg("policy").arg(policy)
+        .arg("asset").arg(asset)
+        .arg("name").arg(name)
+        .arg("image").arg(image)
+        .arg("media_type").arg(media_type)
+        .arg("description").arg(description)
+        .arg("raw_json").arg(raw_json)
         .query(conn);
+
 
         match result {
             Ok(_) => {
