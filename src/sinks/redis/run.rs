@@ -35,7 +35,7 @@ pub fn producer_loop(
         );
 
         let parsed_json: Value = serde_json::from_str(&json!(event).to_string()).unwrap();
-        let result: Result<(), _>;
+
 
         if stream.eq("cip25asset") {
             let parsed_cip25 = &parsed_json["cip25_asset"];
@@ -47,7 +47,7 @@ pub fn producer_loop(
             let name = parsed_cip25["name"].to_string();
             let raw_json = json!(parsed_cip25["raw_json"]).to_string();
 
-             result = redis::cmd("HSET")
+            let result: Result<(), _> = redis::cmd("HSET")
             .arg(format!("{}:{}:{}", stream, policy, asset))
             .arg("policy").arg(policy)
             .arg("asset").arg(asset)
@@ -57,15 +57,24 @@ pub fn producer_loop(
             .arg("description").arg(description)
             .arg("raw_json").arg(raw_json)
             .query(conn);
+
+            match result {
+                Ok(_) => {
+                    utils.track_sink_progress(&event);
+                }
+                Err(err) => {
+                    log::error!("error sending message to redis: {}", err);
+                    return Err(Box::new(err));
+                }
+            }
         } 
         else 
         {
-            let result = redis::cmd("HSET")
-            .arg(format!("{}:{}", stream, key))
-            .arg("json_text").arg(json!(event).to_string())
+            let result: Result<(), _> = redis::cmd("XADD")
+            .arg(stream)
+            .arg("*")
+            .arg(&[(key, json!(event).to_string())])
             .query(conn);
-        }
-
 
         match result {
             Ok(_) => {
@@ -76,6 +85,8 @@ pub fn producer_loop(
                 return Err(Box::new(err));
             }
         }
+        }
+
     }
 
     Ok(())
