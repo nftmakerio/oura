@@ -37,7 +37,7 @@ pub fn producer_loop(
         let parsed_json: Value = serde_json::from_str(&json!(event).to_string()).unwrap();
         let result: Result<(), _>;
 
-        if (stream == "cip25asset") {
+        if stream.eq("cip25asset") {
             let parsed_cip25 = &parsed_json["cip25_asset"];
             let asset = parsed_cip25["asset"].to_string();
             let description = parsed_cip25["description"].to_string();
