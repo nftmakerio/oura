@@ -41,12 +41,18 @@ pub fn producer_loop(
             .arg(&[("json", json!(event).to_string())])
             .query(conn);
 */
+/* 
         let result: Result<(), _> = redis::cmd("JSON.SET")
             .arg(key)
             .arg("$")
             .arg(json!(event).to_string())
             .query(conn);
+*/
 
+        let result: Result<(), _> = redis::cmd("SET")
+        .arg(key)
+        .arg(json!(event).to_string())
+        .query(conn);
 
         match result {
             Ok(_) => {
