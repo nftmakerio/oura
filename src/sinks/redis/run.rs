@@ -1,6 +1,7 @@
 use super::StreamStrategy;
 use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
 use serde_json::json;
+use serde_json::Value;
 use std::sync::Arc;
 
 fn key(event: &Event) -> String {
