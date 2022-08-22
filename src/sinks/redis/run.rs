@@ -50,7 +50,7 @@ pub fn producer_loop(
             .query(conn);
 */
 
-        let parsedCip25: Value = serde_json::from_str(&json!(event).to_string())?;
+        let parsedCip25: Value = serde_json::from_str(json!(event))?;
         let asset = parsedCip25["asset"].to_string();
         let description = parsedCip25["description"].to_string();
         let image = parsedCip25["image"].to_string();
@@ -60,7 +60,7 @@ pub fn producer_loop(
         let raw_json = json!(parsedCip25["raw_json"]).to_string();
 
         let result: Result<(), _> = redis::cmd("HSET")
-        .arg(format!("cip25_asset:{}.{}", policy, asset))
+        .arg(format!("{}:cip25_asset:{}.{}", stream, policy, asset))
         .arg("policy").arg(policy)
         .arg("asset").arg(asset)
         .arg("name").arg(name)
