@@ -40,21 +40,27 @@ pub fn producer_loop(
         if stream.eq("cip25asset") {
             let parsed_cip25 = &parsed_json["cip25_asset"];
             let asset = parsed_cip25["asset"].to_string();
-            let description = parsed_cip25["description"].to_string();
-            let image = parsed_cip25["image"].to_string();
-            let media_type = parsed_cip25["media_type"].to_string();
-            let policy = parsed_cip25["policy"].to_string();
             let name = parsed_cip25["name"].to_string();
-            let raw_json = json!(parsed_cip25["raw_json"]).to_string();
+            let description = parsed_cip25["description"].to_string();
+            let asset_lc = parsed_cip25["asset"].to_string().to_lowercase();
+            let name_lc = parsed_cip25["name"].to_string().to_lowercase();
+            let description_lc = parsed_cip25["description"].to_string().to_lowercase();
+            let image = parsed_cip25["image"].to_string();
+            let media_type = parsed_cip25["media_type"].to_string().to_lowercase();
+            let policy = parsed_cip25["policy"].to_string();
+            let raw_json = json!(parsed_cip25["raw_json"]).to_string().to_lowercase();
 
             let result: Result<(), _> = redis::cmd("HSET")
-            .arg(format!("{}:{}:{}", stream, policy, asset))
+            .arg(format!("{}:{}:{}", stream, policy, asset_lc))
             .arg("policy").arg(policy)
             .arg("asset").arg(asset)
             .arg("name").arg(name)
+            .arg("description").arg(description)
+            .arg("asset_lc").arg(asset_lc)
+            .arg("name_lc").arg(name_lc)
+            .arg("description_lc").arg(description_lc)
             .arg("image").arg(image)
             .arg("media_type").arg(media_type)
-            .arg("description").arg(description)
             .arg("raw_json").arg(raw_json)
             .query(conn);
 
