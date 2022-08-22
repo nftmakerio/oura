@@ -1,7 +1,7 @@
 use super::StreamStrategy;
 use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
-use serde_json::json;
 use serde_json::Value;
+use serde_json::json;
 use std::sync::Arc;
 
 fn key(event: &Event) -> String {
@@ -34,30 +34,16 @@ pub fn producer_loop(
             &event
         );
 
-/*
-        let result: Result<(), _> = redis::cmd("XADD")
-            .arg(stream)
-            .arg("*")
-            .arg(&[("key", key)])
-            .arg(&[("json", json!(event).to_string())])
-            .query(conn);
-*/
-/* 
-        let result: Result<(), _> = redis::cmd("JSON.SET")
-            .arg(key)
-            .arg("$")
-            .arg(json!(event).to_string())
-            .query(conn);
-*/
+        let parsed_json: Value = serde_json::from_str(&json!(event).to_string()).unwrap();
+        let parsed_cip25 = &parsed_json["cip25_asset"];
+        let asset = parsed_cip25["asset"].to_string();
+        let description = parsed_cip25["description"].to_string();
+        let image = parsed_cip25["image"].to_string();
+        let media_type = parsed_cip25["media_type"].to_string();
+        let policy = parsed_cip25["policy"].to_string();
+        let name = parsed_cip25["name"].to_string();
+        let raw_json = json!(parsed_cip25["raw_json"]).to_string();
 
-        let parsedCip25: Value = serde_json::from_str(&json!(event).to_string()).unwrap();
-        let asset = parsedCip25["asset"].to_string();
-        let description = parsedCip25["description"].to_string();
-        let image = parsedCip25["image"].to_string();
-        let media_type = parsedCip25["media_type"].to_string();
-        let policy = parsedCip25["policy"].to_string();
-        let name = parsedCip25["name"].to_string();
-        let raw_json = json!(parsedCip25["raw_json"]).to_string();
 
         let result: Result<(), _> = redis::cmd("HSET")
         .arg(format!("{}:cip25_asset:{}.{}", stream, policy, asset))
