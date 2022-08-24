@@ -5,11 +5,23 @@ use serde_json::json;
 use std::sync::Arc;
 use hex;
 
+
 fn key(event: &Event) -> String {
     if let Some(fingerprint) = &event.fingerprint {
         fingerprint.clone()
     } else {
         event.data.clone().to_string().to_lowercase()
+    }
+}
+
+trait Clean {
+    fn clean(&self) -> Self;
+}
+
+impl Clean for String {
+    fn clean(&self) -> Self {
+        // to_owned() to go from &str to String, so you can chain String methods
+        return self.trim_start_matches("\"").to_owned().trim_end_matches("\"").to_owned();
     }
 }
 
@@ -40,38 +52,39 @@ pub fn producer_loop(
 
         if stream.eq("cip25asset") {
             let parsed_cip25 = &parsed_json["cip25_asset"];
-            let asset = parsed_cip25["asset"].to_string();
-            let asset_hex = parsed_cip25["asset"].to_string();
-            let name = parsed_cip25["name"].to_string();
-            let description = parsed_cip25["description"].to_string();
-            let asset_lc = parsed_cip25["asset"].to_string().to_lowercase();
-            let name_lc = parsed_cip25["name"].to_string().to_lowercase();
-            let description_lc = parsed_cip25["description"].to_string().to_lowercase();
-            let image = parsed_cip25["image"].to_string();
-            let media_type = parsed_cip25["media_type"].to_string().to_lowercase();
-            let policy = parsed_cip25["policy"].to_string();
-            let raw_json = json!(parsed_cip25["raw_json"]).to_string().to_lowercase();
+            let asset = parsed_cip25["asset"].to_string().clean();
+            let asset_hex = parsed_cip25["asset"].to_string().clean();
+            let name = parsed_cip25["name"].to_string().clean();
+            let description = parsed_cip25["description"].to_string().clean();
+            let asset_lc = parsed_cip25["asset"].to_string().to_lowercase().clean();
+            let name_lc = parsed_cip25["name"].to_string().to_lowercase().clean();
+            let description_lc = parsed_cip25["description"].to_string().to_lowercase().clean();
+            let image = parsed_cip25["image"].to_string().clean();
+            let media_type = parsed_cip25["media_type"].to_string().to_lowercase().clean();
+            let policy = parsed_cip25["policy"].to_string().clean();
+            let raw_json = json!(parsed_cip25["raw_json"]).to_string().to_lowercase().clean();
 
             let context = &parsed_json["context"];
-            let timestamp = context["timestamp"].to_string().replace("\"","");
+            let timestamp = context["timestamp"].to_string().clean();
 
 
-            let mut keyName = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
-            keyName = keyName.replace("\"","");
+            let mut key_name = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
+            key_name = key_name.to_string().clean();
+
 
             let result: Result<(), _> = redis::cmd("HSET")
-            .arg(keyName)
-            .arg("policy").arg(policy)
-            .arg("asset").arg(asset)
-            .arg("name").arg(name)
-            .arg("description").arg(description)
-            .arg("asset_lc").arg(asset_lc)
-            .arg("name_lc").arg(name_lc)
-            .arg("description_lc").arg(description_lc)
-            .arg("image").arg(image)
-            .arg("media_type").arg(media_type)
-            .arg("raw_json").arg(raw_json)
-            .arg("timestamp").arg(timestamp)
+            .arg(key_name)
+            .arg("policy").arg(&policy)
+            .arg("asset").arg(&asset)
+            .arg("name").arg(&name)
+            .arg("description").arg(&description)
+            .arg("asset_lc").arg(&asset_lc)
+            .arg("name_lc").arg(&name_lc)
+            .arg("description_lc").arg(&description_lc)
+            .arg("image").arg(&image)
+            .arg("media_type").arg(&media_type)
+            .arg("raw_json").arg(&raw_json)
+            .arg("timestamp").arg(&timestamp)
             .query(conn);
 
             match result {
@@ -83,8 +96,8 @@ pub fn producer_loop(
                     return Err(Box::new(err));
                 }
             }
-        } 
-        else 
+        }
+        else
         {
             let result: Result<(), _> = redis::cmd("XADD")
             .arg(stream)
