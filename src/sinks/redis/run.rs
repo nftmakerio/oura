@@ -63,9 +63,12 @@ pub fn producer_loop(
             let media_type = parsed_cip25["media_type"].to_string().to_lowercase().clean();
             let policy = parsed_cip25["policy"].to_string().clean();
             let raw_json = json!(parsed_cip25["raw_json"]).to_string().to_lowercase().clean();
+            let policy = parsed_cip25["policy"].to_string().clean();
 
             let context = &parsed_json["context"];
             let timestamp = context["timestamp"].to_string().clean();
+            let slot = context["slot"].to_string().clean();
+            let tx_hash = context["tx_hash"].to_string().clean();
 
 
             let mut key_name = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
@@ -85,6 +88,8 @@ pub fn producer_loop(
             .arg("media_type").arg(&media_type)
             .arg("raw_json").arg(&raw_json)
             .arg("timestamp").arg(&timestamp)
+            .arg("slot").arg(&slot)
+            .arg("tx_hash").arg(&tx_hash)
             .query(conn);
 
             match result {
