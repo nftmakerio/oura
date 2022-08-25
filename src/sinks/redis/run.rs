@@ -73,7 +73,7 @@ pub fn producer_loop(
             let mut key_name = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
             key_name = key_name.to_string().clean();
 
-            let last_slot_tx_hash : Result<(), _> = redis::cmd("HSET")
+            let _last_slot_tx_hash : Result<(), _> = redis::cmd("HSET")
             .arg("last_slot_tx_hash")
             .arg("slot").arg(&slot)
             .arg("tx_hash").arg(&tx_hash)
