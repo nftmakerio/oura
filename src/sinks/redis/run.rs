@@ -63,7 +63,6 @@ pub fn producer_loop(
             let media_type = parsed_cip25["media_type"].to_string().to_lowercase().clean();
             let policy = parsed_cip25["policy"].to_string().clean();
             let raw_json = json!(parsed_cip25["raw_json"]).to_string().to_lowercase().clean();
-            let policy = parsed_cip25["policy"].to_string().clean();
 
             let context = &parsed_json["context"];
             let timestamp = context["timestamp"].to_string().clean();
