@@ -75,7 +75,7 @@ pub fn producer_loop(
 
             let _last_slot_tx_hash : Result<(), _> = redis::cmd("HSET")
             .arg("last_slot_tx_hash")
-            .arg("key_name").arg(key_name)
+            .arg("key_name").arg(key_name.clone())
             .arg("slot").arg(&slot)
             .arg("tx_hash").arg(&tx_hash)
             .arg("policy").arg(&policy)
