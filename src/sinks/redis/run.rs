@@ -73,6 +73,13 @@ pub fn producer_loop(
             let mut key_name = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
             key_name = key_name.to_string().clean();
 
+            let last_slot_tx_hash : Result<(), _> = redis::cmd("HSET")
+            .arg("last_slot_tx_hash")
+            .arg("slot").arg(&slot)
+            .arg("tx_hash").arg(&tx_hash)
+            .arg("policy").arg(&policy)
+            .arg("asset").arg(&asset)
+            .query(conn);
 
             let result: Result<(), _> = redis::cmd("HSET")
             .arg(key_name)
@@ -87,8 +94,6 @@ pub fn producer_loop(
             .arg("media_type").arg(&media_type)
             .arg("raw_json").arg(&raw_json)
             .arg("timestamp").arg(&timestamp)
-            .arg("slot").arg(&slot)
-            .arg("tx_hash").arg(&tx_hash)
             .query(conn);
 
             match result {
