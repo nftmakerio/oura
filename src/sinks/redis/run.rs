@@ -66,9 +66,6 @@ pub fn producer_loop(
 
             let context = &parsed_json["context"];
             let timestamp = context["timestamp"].to_string().clean();
-            let slot = context["slot"].to_string().clean();
-            let tx_hash = context["tx_hash"].to_string().clean();
-
 
             let mut key_name = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
             key_name = key_name.to_string().clean();
