@@ -1,16 +1,16 @@
-FROM --platform=linux/amd64 rust:1-buster as builder-arm64
+# FROM --platform=linux/amd64 rust:1-buster as builder-arm64
 
-RUN apt update && apt upgrade -y
-RUN apt install -y g++-arm-linux-gnueabihf libc6-dev-armhf-cross
+# RUN apt update && apt upgrade -y
+# RUN apt install -y g++-arm-linux-gnueabihf libc6-dev-armhf-cross
 
-ENV RUST_TARGET=armv7-unknown-linux-gnueabihf
+# ENV RUST_TARGET=armv7-unknown-linux-gnueabihf
 
-RUN rustup target add armv7-unknown-linux-gnueabihf
-RUN rustup toolchain install stable-armv7-unknown-linux-gnueabihf
+# RUN rustup target add armv7-unknown-linux-gnueabihf
+# RUN rustup toolchain install stable-armv7-unknown-linux-gnueabihf
 
-ENV CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc \
-    CC_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-gcc \
-    CXX_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-g++
+# ENV CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc \
+#     CC_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-gcc \
+#     CXX_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-g++
 
 
 
@@ -20,7 +20,7 @@ ENV RUST_TARGET=x86_64-unknown-linux-gnu
 
 
 
-FROM --platform=linux/amd64 builder-${TARGETARCH} as builder
+FROM --platform=linux/amd64 builder-amd64 as builder
 
 WORKDIR /code
 
