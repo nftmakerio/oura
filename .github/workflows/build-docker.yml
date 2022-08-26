@@ -1,0 +1,68 @@
+name: Build Oura
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  # StoresOuraRedisSearchub Container package using multi-arch docker builds
+  container_build:
+    runs-on: ubuntu-22.04
+
+    if: startsWith(github.ref, 'refs/tags/v-') 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # Set the git tag as environment variable
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v-}" >> $GITHUB_ENV
+
+      # Specify the AWS credentials
+      - name: Specify AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      # Login to ECR
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Build and push docker image
+      - name: Build and push docker image
+        run: |
+          docker build --pull -f Dockerfile -t ${{ secrets.AWS_ECR_URL_OURA }}:${{ env.RELEASE_VERSION }} .
+          docker push ${{ secrets.AWS_ECR_URL_OURA }}:${{ env.RELEASE_VERSION }}
+
+  # Deploy production 
+  deployNmkrStoreProduction:
+    runs-on: ubuntu-22.04
+    needs: build-docker
+    if: startsWith(github.ref, 'refs/tags/v-') && contains(github.ref, 'alpha') == false && contains(github.ref, 'beta') == false && contains(github.ref, 'rc') == false
+    steps:
+      - uses: mikefarah/yq@v4.24.2
+
+      # Set the git tag as environment variable
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v-}" >> $GITHUB_ENV
+
+      - name: Checkout k8s repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ secrets.K8S_REPOSITORY }}
+          ref: main
+          ssh-key: ${{ secrets.K8S_REPOSITORY_SSH_KEY }}
+          path: k8s
+      
+      - name: Update k8s deployment version
+        run: |
+          yq -i ".ouraRedisSearch.image.tag = env(RELEASE_VERSION)" k8s/helm/charts/nft-maker-marketplace/prod-k8s1-mainnet-values.yaml
+
+      - name: Commit changes
+        run: |
+          cd k8s
+          git config --global user.email "autodeploy@astack.xyz"
+          git config --global user.name "NMKR Store OuraRedisSearch Autodeploy"
+          git commit --allow-empty -am "feat(NMKR Store OuraRedisSearch): Update image ref to ${{ env.RELEASE_VERSION }}"
+          git push -u origin main          
