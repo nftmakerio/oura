@@ -57,7 +57,7 @@ jobs:
       
       - name: Update k8s deployment version
         run: |
-          yq -i ".ouraRedisSearch.image.tag = env(RELEASE_VERSION)" k8s/helm/charts/nft-maker-marketplace/prod-k8s1-mainnet-values.yaml
+          yq -i ".ouraRedisSearch.oura.image.tag = env(RELEASE_VERSION)" k8s/helm/charts/nft-maker-marketplace/prod-k8s1-mainnet-values.yaml
 
       - name: Commit changes
         run: |
