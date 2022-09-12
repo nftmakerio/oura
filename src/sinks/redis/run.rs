@@ -67,10 +67,8 @@ pub fn producer_loop(
             let context = &parsed_json["context"];
             let timestamp = context["timestamp"].to_string().clean();
 
-
             let mut key_name = format!("{}:{}:{}", stream, policy, hex::encode(asset_hex));
             key_name = key_name.to_string().clean();
-
 
             let result: Result<(), _> = redis::cmd("HSET")
             .arg(key_name)

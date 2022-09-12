@@ -6,7 +6,10 @@ use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
 use crate::{
-    model::{Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord},
+    model::{
+        Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
+        TransactionRecord, TxOutputRecord,
+    },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
 
@@ -17,6 +20,7 @@ pub enum Predicate {
     VariantNotIn(Vec<String>),
     PolicyEquals(String),
     AssetEquals(String),
+    AddressEquals(String),
     MetadataLabelEquals(String),
     MetadataAnySubLabelEquals(String),
     Not(Box<Predicate>),
@@ -48,6 +52,14 @@ fn policy_matches(event: &Event, policy: &str) -> bool {
 }
 
 #[inline]
+fn address_matches(event: &Event, address: &str) -> bool {
+    match &event.data {
+        EventData::TxOutput(TxOutputRecord { address: x, .. }) => relaxed_str_matches(x, address),
+        _ => false,
+    }
+}
+
+#[inline]
 fn asset_matches(event: &Event, asset: &str) -> bool {
     match &event.data {
         EventData::OutputAsset(OutputAssetRecord { asset: x, .. }) => relaxed_str_matches(x, asset),
@@ -59,6 +71,9 @@ fn asset_matches(event: &Event, asset: &str) -> bool {
 #[inline]
 fn metadata_label_matches(event: &Event, label: &str) -> bool {
     match &event.data {
+        EventData::Transaction(TransactionRecord {
+            metadata: Some(x), ..
+        }) => x.iter().any(|r| relaxed_str_matches(&r.label, label)),
         EventData::Metadata(MetadataRecord { label: x, .. }) => relaxed_str_matches(x, label),
         _ => false,
     }
@@ -84,6 +99,7 @@ impl Predicate {
             Predicate::VariantIn(x) => variant_in_matches(event, x),
             Predicate::VariantNotIn(x) => !variant_in_matches(event, x),
             Predicate::PolicyEquals(x) => policy_matches(event, x),
+            Predicate::AddressEquals(x) => address_matches(event, x),
             Predicate::AssetEquals(x) => asset_matches(event, x),
             Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
             Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
